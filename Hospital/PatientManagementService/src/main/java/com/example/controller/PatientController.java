@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.dto.PatientDto;
 import com.example.entity.Patient;
 import com.example.mapper.PatientMapper;
+import com.example.service.PatientBatchProcessingService;
 import com.example.service.PatientService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -17,6 +18,8 @@ public class PatientController {
 
     @Autowired
     private PatientService patientService;
+    @Autowired
+    private PatientBatchProcessingService patientBatchProcessingService;
 
     @PostMapping("/createPatients")
     public ResponseEntity<List<PatientDto>> createPatients(@RequestBody List<PatientDto> patientDtos) {
@@ -55,7 +58,14 @@ public class PatientController {
 
     @GetMapping("/getAll")
     public ResponseEntity<List<PatientDto>> getAllPatients() {
-        List<PatientDto> patientDtos = patientService.getAllPatientDtos();
+        List<Patient> patients = patientService.getAllPatients();
+        if (!patients.isEmpty()) {
+            patientBatchProcessingService.markPatientsAsAnonymized(patients);
+        }
+        List<PatientDto> patientDtos = patients.stream()
+                .map(PatientMapper.INSTANCE::patientToDto)
+                .collect(Collectors.toList());
+        //List<PatientDto> patientDtos = patientService.getAllPatientDtos();
         return new ResponseEntity<>(patientDtos, HttpStatus.OK);
     }
 }

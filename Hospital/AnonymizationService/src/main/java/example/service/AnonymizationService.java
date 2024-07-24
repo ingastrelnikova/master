@@ -136,7 +136,7 @@ public class AnonymizationService {
         return result;
     }
 
-    public void saveAnonymizedPatients(List<AnonymizedPatientDto> anonymizedPatientDtos) {
+    public void saveAnonymizedPatientsInitial(List<AnonymizedPatientDto> anonymizedPatientDtos) {
         List<AnonymizedPatient> anonymizedPatients = new ArrayList<>();
         for (AnonymizedPatientDto dto : anonymizedPatientDtos) {
             AnonymizedPatient anonymizedPatient = new AnonymizedPatient();
@@ -152,32 +152,32 @@ public class AnonymizationService {
     }
 
 
-//    @Transactional
-//    public void saveAnonymizedPatientsTest(List<AnonymizedPatientDto> anonymizedPatientDtos) {
-//        List<AnonymizedPatient> anonymizedPatients = new ArrayList<>();
-//        for (AnonymizedPatientDto dto : anonymizedPatientDtos) {
-//            AnonymizedPatient anonymizedPatient = new AnonymizedPatient();
-//            anonymizedPatient.setAnonymizedId(dto.getAnonymizedId());
-//            anonymizedPatient.setAnonymizedName(dto.getAnonymizedName());
-//            anonymizedPatient.setAnonymizedDateOfBirth(dto.getAnonymizedDateOfBirth());
-//            anonymizedPatient.setZipCode(dto.getZipCode());
-//            anonymizedPatient.setGender(dto.getGender());
-//            anonymizedPatient.setDisease(dto.getDisease());
-//
-//            // check patient with id and update if there
-//            Optional<AnonymizedPatient> existingPatient = anonymizedPatientRepository.findById(dto.getAnonymizedId());
-//            if (existingPatient.isPresent()) {
-//                AnonymizedPatient existing = existingPatient.get();
-//                existing.setAnonymizedName(dto.getAnonymizedName());
-//                existing.setAnonymizedDateOfBirth(dto.getAnonymizedDateOfBirth());
-//                existing.setZipCode(dto.getZipCode());
-//                existing.setGender(dto.getGender());
-//                existing.setDisease(dto.getDisease());
-//                anonymizedPatients.add(existing);
-//            } else {
-//                anonymizedPatients.add(anonymizedPatient);
-//            }
-//        }
-//        anonymizedPatientRepository.saveAll(anonymizedPatients);
-//    }
+    @Transactional
+    public void saveAnonymizedPatients(List<AnonymizedPatientDto> anonymizedPatientDtos) {
+        List<AnonymizedPatient> anonymizedPatients = new ArrayList<>();
+        for (AnonymizedPatientDto dto : anonymizedPatientDtos) {
+            AnonymizedPatient anonymizedPatient = new AnonymizedPatient();
+            anonymizedPatient.setAnonymizedId(dto.getAnonymizedId());
+            anonymizedPatient.setAnonymizedName(dto.getAnonymizedName());
+            anonymizedPatient.setAnonymizedDateOfBirth(dto.getAnonymizedDateOfBirth());
+            anonymizedPatient.setZipCode(dto.getZipCode());
+            anonymizedPatient.setGender(dto.getGender());
+            anonymizedPatient.setDisease(dto.getDisease());
+
+            // check patient with id and update if there
+            Optional<AnonymizedPatient> existingPatient = anonymizedPatientRepository.findById(dto.getAnonymizedId());
+            if (existingPatient.isPresent()) {
+                AnonymizedPatient existing = existingPatient.get();
+                existing.setAnonymizedName(dto.getAnonymizedName());
+                existing.setAnonymizedDateOfBirth(dto.getAnonymizedDateOfBirth());
+                existing.setZipCode(dto.getZipCode());
+                existing.setGender(dto.getGender());
+                existing.setDisease(dto.getDisease());
+                anonymizedPatients.add(existing);
+            } else {
+                anonymizedPatients.add(anonymizedPatient);
+            }
+        }
+        anonymizedPatientRepository.saveAll(anonymizedPatients);
+    }
 }

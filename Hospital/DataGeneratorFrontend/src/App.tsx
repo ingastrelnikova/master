@@ -45,7 +45,8 @@ const App: React.FC = () => {
             diversity_level
         };
 
-        fetch('http://load-generator-backend:5000/set_parameters', {
+        // this runs in browser, so does no recognize docker containers
+        fetch('http://localhost:5000/set_parameters', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
