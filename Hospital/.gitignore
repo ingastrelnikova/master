@@ -5,3 +5,4 @@ venv/
 Test/
 docker-compose_anon.yml
 docker-compose_final.yml
+.DS_Store
