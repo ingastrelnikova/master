@@ -10,7 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import javax.transaction.Transactional;
+//import javax.transaction.Transactional;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -21,7 +24,7 @@ public class ReAnonymizationService {
     @Autowired
     private AnonymizedPatientRepository anonymizedPatientRepository;
     @Autowired
-    private PrometheusClient prometheusClient;
+    private example.service.PrometheusClient prometheusClient;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -38,12 +41,12 @@ public class ReAnonymizationService {
     private double currentMDTD = 0.0;
 
 
-    @Scheduled(fixedRate = 15000)  // check metrics every 15 seconds
+    @Scheduled(fixedRate = 30000)  // check metrics every 30 seconds
     public void checkMetrics() {
         try {
             currentKAnonymity = this.prometheusClient.queryMetric("k_anonymity");
             currentMDTD = this.prometheusClient.queryMetric("max_deletions_to_degrade");
-//            System.out.println("Updated Metrics: k-anonymity: " + currentKAnonymity + ", data volume: " + currentDataVolume + ", max_deletions_to_degrade:" + currentMDTD);
+            System.out.println("Updated Metrics: k-anonymity: " + currentKAnonymity + ", max_deletions_to_degrade:" + currentMDTD);
 
             if (currentKAnonymity < desiredKAnonymity || currentMDTD < desiredMDTD) {
                 this.reanonymizeDataset();
@@ -58,8 +61,10 @@ public class ReAnonymizationService {
 
     private void reanonymizeDataset() {
         List<PatientDto> patients = fetchPatientData();
-        List<AnonymizedPatientDto> newAnonymizedPatients = anonymizationService.anonymizePatients(patients, (int) desiredKAnonymity);
-        this.replaceAnonymizedData(newAnonymizedPatients);
+        if (!patients.isEmpty()) {
+            List<AnonymizedPatientDto> newAnonymizedPatients = anonymizationService.anonymizePatients(patients, (int) desiredKAnonymity);
+            this.replaceAnonymizedData(newAnonymizedPatients);
+        }
     }
 
     private List<PatientDto> fetchPatientData() {
@@ -71,8 +76,8 @@ public class ReAnonymizationService {
         }
     }
 
-    @Transactional
-    public void replaceAnonymizedData(List<AnonymizedPatientDto> newAnonymizedPatients) {
+    @Transactional(isolation = Isolation.SERIALIZABLE, propagation = Propagation.REQUIRES_NEW)
+    public synchronized void replaceAnonymizedData(List<AnonymizedPatientDto> newAnonymizedPatients) {
         this.anonymizedPatientRepository.deleteAll();
         this.anonymizationService.saveAnonymizedPatients(newAnonymizedPatients);
     }

@@ -26,6 +26,9 @@ public class PatientService {
     @Autowired
     private AnonymizationClient anonymizationClient;
 
+    @Autowired
+    private PatientBatchProcessingService patientBatchProcessingService;
+
     private static final int MAX_RETRIES = 3;
     private final Object lock = new Object();
 
@@ -33,13 +36,29 @@ public class PatientService {
     public List<Patient> savePatients(List<Patient> patients) {
         return retryOnOptimisticLock(() -> {
             try {
-                return patients.stream()
+                List<Patient> savedPatients = patients.stream()
                         .map(this::saveOrUpdatePatient)
                         .collect(Collectors.toList());
+                if (!savedPatients.isEmpty() && savedPatients.size() >= 50) {
+                    this.sendForAnonymization(savedPatients);
+                }
+                return savedPatients;
             } catch (DataIntegrityViolationException e) {
                 throw new RuntimeException("Data integrity error: " + e.getMessage(), e);
             }
         });
+    }
+
+    public void sendForAnonymization(List<Patient> patients) {
+        try {
+            List<PatientDto> result = this.anonymizationClient.anonymizePatients(PatientMapper.INSTANCE.patientsToPatientDtos(patients));
+
+            if (result != null && !result.isEmpty()) {
+                this.patientBatchProcessingService.markPatientsAsAnonymized(patients);
+            }
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
     }
 
     @Transactional

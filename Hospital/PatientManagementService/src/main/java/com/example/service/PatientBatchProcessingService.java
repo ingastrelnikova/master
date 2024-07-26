@@ -18,13 +18,12 @@ public class PatientBatchProcessingService {
     @Autowired
     private AnonymizationClient anonymizationClient;
 
-    @Scheduled(fixedDelay = 10000) // check every 10 seconds
+    @Scheduled(fixedDelay = 30000) // check every 30 seconds
     public void processAndSendForAnonymization() {
         List<Patient> patientsToAnonymize = patientRepository.findByAnonymizedFalse();
         // 50 as threshold to test
         if (patientsToAnonymize.size() >= 50) {
             try {
-                List<PatientDto> p = PatientMapper.INSTANCE.patientsToPatientDtos(patientsToAnonymize);
                 List<PatientDto> result = this.anonymizationClient.anonymizePatients(PatientMapper.INSTANCE.patientsToPatientDtos(patientsToAnonymize));
 
                 if (result != null && !result.isEmpty()) {

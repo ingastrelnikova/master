@@ -58,14 +58,13 @@ public class PatientController {
 
     @GetMapping("/getAll")
     public ResponseEntity<List<PatientDto>> getAllPatients() {
-        List<Patient> patients = patientService.getAllPatients();
+        List<PatientDto> patientDtos = patientService.getAllPatientDtos();
+        List<Patient> patients = patientDtos.stream()
+                .map(PatientMapper.INSTANCE::dtoToPatient)
+                .collect(Collectors.toList());
         if (!patients.isEmpty()) {
             patientBatchProcessingService.markPatientsAsAnonymized(patients);
         }
-        List<PatientDto> patientDtos = patients.stream()
-                .map(PatientMapper.INSTANCE::patientToDto)
-                .collect(Collectors.toList());
-        //List<PatientDto> patientDtos = patientService.getAllPatientDtos();
         return new ResponseEntity<>(patientDtos, HttpStatus.OK);
     }
 }

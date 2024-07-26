@@ -4,13 +4,17 @@ import pandas as pd
 import time
 import sys
 from prometheus_client import start_http_server, Gauge, Histogram
+from dotenv import load_dotenv
 
-# parameters for database connection
-dbname = os.getenv('DB_NAME', 'research')
-user = os.getenv('DB_USER', 'test')
-password = os.getenv('DB_PASSWORD', 'test')
-host = os.getenv('DB_HOST', 'research-db')
-port = os.getenv('DB_PORT', '5432')
+# load parameters from .env
+load_dotenv()
+
+# parameters for database connection from .env
+dbname = os.getenv('DB_NAME')
+user = os.getenv('DB_USER')
+password = os.getenv('DB_PASSWORD')
+host = os.getenv('DB_HOST')
+port = os.getenv('DB_PORT')
 
 # Prometheus metrics
 K_ANONYMITY_GAUGE = Gauge('k_anonymity', 'Minimum k-anonymity value observed')

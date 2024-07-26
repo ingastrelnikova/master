@@ -8,14 +8,13 @@ import os
 import requests
 import pandas as pd
 import threading
-import time
 
 app = Flask(__name__)
 CORS(app)
 
 # Parameters, set via frontend or random
 parameters = {
-    'batch_size': 'random',
+    'batch_size': '1000',
     'delete_size': '0',
     'diversity_level': 'random'
 }
@@ -138,7 +137,7 @@ def set_parameters():
 # Method to schedule the generation and deletion
 def schedule_tasks():
     if not scheduler.get_jobs():
-        scheduler.add_job(generate_patients, IntervalTrigger(seconds=15, timezone=pytz.utc), id='generate_patients_job')
+        scheduler.add_job(generate_patients, IntervalTrigger(seconds=90, timezone=pytz.utc), id='generate_patients_job')
         scheduler.add_job(delete_patients, IntervalTrigger(seconds=15, timezone=pytz.utc), id='delete_patients_job')
         scheduler.start()
 
