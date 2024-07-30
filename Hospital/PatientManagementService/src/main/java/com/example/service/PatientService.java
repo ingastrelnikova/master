@@ -97,6 +97,7 @@ public class PatientService {
                         .collect(Collectors.toList());
 
                 if (!anonymizedPatientIds.isEmpty()) {
+                    System.out.println(anonymizedPatientIds);
                     anonymizationClient.deleteAnonymizedPatients(anonymizedPatientIds);
                 }
             }

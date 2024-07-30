@@ -18,8 +18,6 @@ public class AnonymizationController {
 
     @PostMapping("/patients")
     public ResponseEntity<List<AnonymizedPatientDto>> anonymizePatients(@RequestBody List<PatientDto> patientDtos) {
-        System.out.println("anon controller");
-        System.out.println(patientDtos.get(0).getId());
         List<AnonymizedPatientDto> anonymizedPatients = this.anonymizationService.anonymizePatients(patientDtos);
         if (anonymizedPatients.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -29,6 +27,7 @@ public class AnonymizationController {
 
     @DeleteMapping("/deletePatients")
     public void deleteAnonymizedPatients(@RequestBody List<Long> patientIds) {
+        System.out.println("we are here");
         anonymizationService.deletePatientsByIds(patientIds);
     }
 }

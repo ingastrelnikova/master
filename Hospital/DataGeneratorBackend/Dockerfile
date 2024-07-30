@@ -9,4 +9,4 @@ EXPOSE 5000
 # to allow prints for debugging
 ENV PYTHONUNBUFFERED=1
 
-CMD ["python", "load_generator_service.py"]
+CMD ["python", "data_generator_service.py"]

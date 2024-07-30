@@ -16,6 +16,11 @@ password = os.getenv('DB_PASSWORD')
 host = os.getenv('DB_HOST')
 port = os.getenv('DB_PORT')
 
+def create_histogram(max_bucket_value):
+    # Create buckets dynamically from 1 up to the maximum value observed
+    buckets = list(range(1, max_bucket_value + 1))
+    return Histogram('equivalence_class_size', 'Distribution of equivalence class sizes', buckets=buckets)
+
 # Prometheus metrics
 K_ANONYMITY_GAUGE = Gauge('k_anonymity', 'Minimum k-anonymity value observed')
 DATA_VOLUME_GAUGE = Gauge('data_volume', 'Number of records processed')
@@ -23,8 +28,22 @@ K_VOLUME_RATIO_GAUGE = Gauge('k_volume_ratio', 'Ratio of k-anonymity to data vol
 AVG_K_ANONYMITY_GAUGE = Gauge('avg_k_anonymity', 'Average k-anonymity over the last minute')
 K_ANONYMITY_FLUCTUATION_RATE = Gauge('k_anonymity_fluctuation_rate', 'Percentage change in k-anonymity')
 MAX_DELETIONS_TO_DEGRADE = Gauge('max_deletions_to_degrade', 'Maximum deletions to degrade k-anonymity')
-EQUIVALENCE_CLASS_HISTOGRAM = Histogram('equivalence_class_size', 'Distribution of equivalence class sizes',
-                                        buckets=[1, 2, 3, 4, 5, 10, 20, 50, 100, 200, 500, 1000])
+EQUIVALENCE_CLASS_HISTOGRAM = create_histogram(1000)
+
+def update_histogram(data):
+    global EQUIVALENCE_CLASS_HISTOGRAM
+    max_value = data['num_of_elements'].max()
+
+    # Recreate the histogram if new data exceeds current bucket limits
+    if max_value > EQUIVALENCE_CLASS_HISTOGRAM._upper_bounds[-1]:
+        EQUIVALENCE_CLASS_HISTOGRAM = create_histogram(max_value)
+
+    for _, row in data.iterrows():
+        num_of_elements = row['num_of_elements']
+        num_of_classes = row['num_of_classes']
+        for _ in range(num_of_classes):
+            EQUIVALENCE_CLASS_HISTOGRAM.observe(num_of_elements)
+
 
 # method to connect to the database
 def connect_to_db():
@@ -59,6 +78,8 @@ def fetch_data(conn):
     finally:
         cursor.close()
 
+
+
 # method to calculate k anonymity
 def calculate_k_anonymity(df):
     unique_groups = df.groupby(['zip_code', 'gender']).size().reset_index(name='num_elements')
@@ -74,7 +95,9 @@ def calculate_anonymity_sets(df):
 
 # method to calculate k anon fluctuation rate
 def calculate_k_anonymity_fluctuation_rate(current_k, previous_k):
-    if previous_k == 0:
+    print(current_k)
+    print(previous_k)
+    if previous_k == 0.0:
         return 0
     return ((current_k - previous_k) / previous_k) * 100
 
@@ -145,8 +168,10 @@ def main():
                     print("Anonymity sets:")
                     print(anonymity_sets_counts)
 
+                    update_histogram(anonymity_sets_counts)
+
                     for index, row in anonymity_sets_counts.iterrows():
-                        EQUIVALENCE_CLASS_HISTOGRAM.observe(row['num_of_elements'])
+                        # EQUIVALENCE_CLASS_HISTOGRAM.observe(row['num_of_elements'])
                         print(f"Anonymity set size: {row['num_of_elements']}, count: {row['num_of_classes']}")
                         sys.stdout.flush()
             else:
