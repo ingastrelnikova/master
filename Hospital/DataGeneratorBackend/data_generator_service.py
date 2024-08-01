@@ -12,9 +12,11 @@ import threading
 app = Flask(__name__)
 CORS(app)
 
+next_patient_id = 1
+
 # Parameters, set via frontend or random
 parameters = {
-    'batch_size': 'random',
+    'batch_size': '60',
     'delete_size': '5',
     'diversity_level': 'random'
 }
@@ -40,6 +42,8 @@ def initialize_patients():
 
 # Method to generate one patient
 def generate_patient():
+    global next_patient_id
+
     if parameters['diversity_level'] == 'random':
         diversity_level = random.randint(0, 100)
     else:
@@ -49,13 +53,15 @@ def generate_patient():
     selected_diseases = random.sample(disease_pool, max(1, diversity_index))
     disease = random.choice(selected_diseases)
 
-    patient_id = len(patients) + 1
+
+    patient_id = next_patient_id
+    next_patient_id += 1
     patient = {
         "id": patient_id,
         "name": random.choice(["Alice", "Bob", "Charlie", "David", "Eva"]),
         # because year granularity is only supported for millenium as a last granularity
-        "dateOfBirth": f"{random.randint(1924, 1999)}-{random.randint(1, 12):02}-{random.randint(1, 28):02}",
-        "zipCode": f"{random.randint(1, 99999):05}",
+        "dateOfBirth": f"{random.randint(1950, 1999)}-{random.randint(1, 12):02}-{random.randint(1, 28):02}",
+        "zipCode": f"{random.randint(10000, 11000):05}",
         "gender": random.choice(["Male", "Female"]),
         "disease": disease
     }
@@ -83,7 +89,6 @@ def send_patient_to_management_service(patient):
 # Method to delete patients from the database
 def delete_patients_from_management_service(patient_ids):
     try:
-        print(len(patient_ids))
         response = requests.post("http://patient-management-service:8080/patients/deletePatientsByIds", json=patient_ids)
         if response.status_code != 204:
             print(f"Response: {response.text}")
